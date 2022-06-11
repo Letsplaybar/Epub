@@ -57,7 +57,7 @@ def generate_toc_ncx(title, page=[]):
     XTree.indent(tree, space="\t", level=0)
     tree.write("./" + title + "/toc.ncx", encoding="utf-8", xml_declaration=True)
 
-def generate_package_opf(title, genres=[], author=False, language=False, publisher=False, description=False, series=False, number=False):
+def generate_package_opf(title, genres=[], author=False, language=False, publisher=False, description=False, series=False, number=False, format="png"):
     root = XTree.Element("package", {"xmlns": "http://www.idpf.org/2007/opf", "version": "3.0", "unique-identifier": "uid", "prefix": "ibooks: http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/"})
     metadata = XTree.SubElement(root, "metadata", {"xmlns:dc": "http://purl.org/dc/elements/1.1/", "xmlns:opf": "http://www.idpf.org/2007/opf"})
     XTree.SubElement(metadata, "dc:title", {"id": "id"}).text = title
@@ -108,12 +108,19 @@ def generate_package_opf(title, genres=[], author=False, language=False, publish
                     XTree.SubElement(spine, "itemref", {"idref": "id" + str(i), "properties": "page-spread-right"})
                 count += 1
                 i += 1
-            elif file.endswith("png"):
-                if "image" in base:
-                    XTree.SubElement(manifest, "item", {"id": "id"+str(i), "href": "images/"+file, "media-type": "image/png"})
-                    i += 1
+            elif file.endswith(format):
+                if "jpg" is not format:
+                    if "image" in base:
+                        XTree.SubElement(manifest, "item", {"id": "id"+str(i), "href": "images/"+file, "media-type": "image/"+format})
+                        i += 1
+                    else:
+                        XTree.SubElement(manifest, "item", {"id": "cover", "href": file, "media-type": "image/"+format})
                 else:
-                    XTree.SubElement(manifest, "item", {"id": "cover", "href": file, "media-type": "image/png"})
+                    if "image" in base:
+                        XTree.SubElement(manifest, "item", {"id": "id"+str(i), "href": "images/"+file, "media-type": "image/jpeg"})
+                        i += 1
+                    else:
+                        XTree.SubElement(manifest, "item", {"id": "cover", "href": file, "media-type": "image/jpeg"})
             elif file.endswith("ncx"):
                 XTree.SubElement(manifest, "item", {"id": "toc.ncx", "href": file, "media-type": "application/x-dtbncx+xml"})
             else:
@@ -149,14 +156,14 @@ def e_pub_zip(file_name, folder):
                 myzip.write(fn, fn.replace(folder+"\\", "").replace(folder+"/", ""))
 
 
-def generate_structure(path):
+def generate_structure(path, format="png"):
     for base, dirs, files in os.walk(path):
         for file in files:
-            if not file.endswith(".png") or "Cover" in file:
+            if not file.endswith("."+format) or "Cover" in file:
                 continue
-            name = file.replace(".png", "")
+            name = file.replace("."+format, "")
             if "000" in file:
-                copyfile(path+"/"+file, path+"/Cover.png")
+                copyfile(path+"/"+file, path+"/Cover."+format)
             if not os.path.exists(path+"/images"):
                 os.mkdir(path+"/images")
                 os.mkdir(path+"/css")
@@ -174,7 +181,7 @@ def generate_structure(path):
             os.rename(path+"/"+file,path+"/images/"+file)
             with open(path+"/"+name+".xhtml", "w", encoding="utf-8") as f:
                 f.write(
-                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n<meta name="viewport" content="width=984, height=1429"/>\n<title>' + path + '</title>\n<link href="css/stylesheet.css" type="text/css" rel="stylesheet"/>\n\n<!-- kobo-style -->\n<script xmlns="http://www.w3.org/1999/xhtml" type="text/javascript" src="js/kobo.js"/>\n\n</head>\n<body>\n\n<div class="even">\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="984" height="1429" viewBox="0 0 984 1429">\n\t<image width="984" height="1429" xlink:href="images/' + name + '.png"/>\n</svg>\n\n</div>\n</body>\n</html>')
+                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n<meta name="viewport" content="width=984, height=1429"/>\n<title>' + path + '</title>\n<link href="css/stylesheet.css" type="text/css" rel="stylesheet"/>\n\n<!-- kobo-style -->\n<script xmlns="http://www.w3.org/1999/xhtml" type="text/javascript" src="js/kobo.js"/>\n\n</head>\n<body>\n\n<div class="even">\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="984" height="1429" viewBox="0 0 984 1429">\n\t<image width="984" height="1429" xlink:href="images/' + name + '.'+format+'"/>\n</svg>\n\n</div>\n</body>\n</html>')
         break
     print(path+" competed!")
 
@@ -236,6 +243,18 @@ if __name__ == "__main__":
                       dest="number",
                       default=False,
                       help="Description of Epub")
+    parser.add_option("--jpg",
+                      action="store_const",
+                      dest="format",
+                      default=None,
+                      const="jpg",
+                      help="Image format Default PNG)")
+    parser.add_option("--jpeg",
+                      action="store_const",
+                      dest="format",
+                      default=None,
+                      const="jpeg",
+                      help="Image format Default PNG)")
     (options, args) = parser.parse_args()
     if len(options.marker_index) != len(options.marker_title):
         print("same amount of marker-index and marker-title requiered!")
@@ -255,9 +274,9 @@ if __name__ == "__main__":
             os.remove("./"+options.title+"/metadata.opf")
         except Exception:
             pass
-        generate_structure(options.title)
+        generate_structure(options.title, format=options.format)
         generate_toc_html(options.title,pages)
         generate_toc_ncx(options.title, pages)
-        generate_package_opf(options.title, options.genre, options.author, options.lang, options.publisher, options.description, options.series, options.number)
+        generate_package_opf(options.title, options.genre, options.author, options.lang, options.publisher, options.description, options.series, options.number, format=options.format)
         genereate_container_xml(options.title)
         e_pub_zip(options.title+".epub", options.title)
