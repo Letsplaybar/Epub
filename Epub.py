@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.9
 
 import os
 from optparse import OptionParser
@@ -109,7 +109,7 @@ def generate_package_opf(title, genres=[], author=False, language=False, publish
                 count += 1
                 i += 1
             elif file.endswith(format):
-                if "jpg" is not format:
+                if "jpg" != format:
                     if "image" in base:
                         XTree.SubElement(manifest, "item", {"id": "id"+str(i), "href": "images/"+file, "media-type": "image/"+format})
                         i += 1
@@ -162,7 +162,7 @@ def generate_structure(path, format="png"):
             if not file.endswith("."+format) or "Cover" in file:
                 continue
             name = file.replace("."+format, "")
-            if "000" in file:
+            if "00001" in file:
                 copyfile(path+"/"+file, path+"/Cover."+format)
             if not os.path.exists(path+"/images"):
                 os.mkdir(path+"/images")
@@ -246,13 +246,13 @@ if __name__ == "__main__":
     parser.add_option("--jpg",
                       action="store_const",
                       dest="format",
-                      default=None,
+                      default="png",
                       const="jpg",
                       help="Image format Default PNG)")
     parser.add_option("--jpeg",
                       action="store_const",
                       dest="format",
-                      default=None,
+                      default="png",
                       const="jpeg",
                       help="Image format Default PNG)")
     (options, args) = parser.parse_args()
@@ -260,8 +260,8 @@ if __name__ == "__main__":
         print("same amount of marker-index and marker-title requiered!")
         exit(-1)
     pages = []
-    if "000.xhtml" not in options.marker_index:
-        pages.append(("000.xhtml", "Cover"))
+    if "00001.xhtml" not in options.marker_index:
+        pages.append(("00001.xhtml", "Cover"))
     for i in range(len(options.marker_index)):
         pages.append((options.marker_index[i],options.marker_title[i]))
     if options.title:
