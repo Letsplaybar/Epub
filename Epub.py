@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3
 
 import os
 from optparse import OptionParser
@@ -156,13 +156,13 @@ def e_pub_zip(file_name, folder):
                 myzip.write(fn, fn.replace(folder+"\\", "").replace(folder+"/", ""))
 
 
-def generate_structure(path, format="png"):
+def generate_structure(path, start, format="png"):
     for base, dirs, files in os.walk(path):
         for file in files:
             if not file.endswith("."+format) or "Cover" in file:
                 continue
             name = file.replace("."+format, "")
-            if "00001" in file:
+            if start in file:
                 copyfile(path+"/"+file, path+"/Cover."+format)
             if not os.path.exists(path+"/images"):
                 os.mkdir(path+"/images")
@@ -259,11 +259,6 @@ if __name__ == "__main__":
     if len(options.marker_index) != len(options.marker_title):
         print("same amount of marker-index and marker-title requiered!")
         exit(-1)
-    pages = []
-    if "00001.xhtml" not in options.marker_index:
-        pages.append(("00001.xhtml", "Cover"))
-    for i in range(len(options.marker_index)):
-        pages.append((options.marker_index[i],options.marker_title[i]))
     if options.title:
         try:
             path = os.path.join("./" + options.title, "META-INF")
@@ -274,7 +269,17 @@ if __name__ == "__main__":
             os.remove("./"+options.title+"/metadata.opf")
         except Exception:
             pass
-        generate_structure(options.title, format=options.format)
+        options.start = "000"
+        for (base, dirs, files) in os.walk(options.title):
+            sort_files = sorted(files, key=natural_keys)
+            options.start = sort_files[0].replace("."+options.format, "")
+            break
+        pages = []
+        if options.start+".xhtml" not in options.marker_index:
+            pages.append((options.start+".xhtml", "Cover"))
+        for i in range(len(options.marker_index)):
+            pages.append((options.marker_index[i], options.marker_title[i]))
+        generate_structure(options.title, options.start , format=options.format)
         generate_toc_html(options.title,pages)
         generate_toc_ncx(options.title, pages)
         generate_package_opf(options.title, options.genre, options.author, options.lang, options.publisher, options.description, options.series, options.number, format=options.format)
