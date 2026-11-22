@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "letsplaybar-epub"
+version = "1.0.0"
+description = "Build EPUB 3 files from manga page images (fixed layout) or light-novel chapters (reflowable)"
+readme = "Readme.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+dependencies = ["Pillow>=9.1"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "epubcheck>=5.1"]
+
+[project.scripts]
+Epub = "epub.cli:main"
+
+[tool.setuptools]
+packages = ["epub"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

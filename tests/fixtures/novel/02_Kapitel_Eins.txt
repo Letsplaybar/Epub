@@ -1,0 +1,4 @@
+Erster Absatz im Textmodus.
+Zweiter Absatz, eine Zeile pro Absatz.
+◇◇◇
+｜東京《とうきょう》と魔法《まほう》の話。
